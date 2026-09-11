@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
+<title>张艺橗 中考英语词汇朗读</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'PingFang SC','Microsoft YaHei',sans-serif;background:#f0f4ff;min-height:100vh}
+.header{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;text-align:center;padding:18px 12px 12px}
+.header h1{font-size:1.4rem;margin-bottom:4px}
+.header p{font-size:.85rem;opacity:.85}
+.tab-bar{display:flex;background:#fff;border-bottom:2px solid #e0e0e0;position:sticky;top:0;z-index:50;overflow-x:auto}
+.tab-btn{flex:1;padding:10px 8px;border:none;background:none;font-size:.9rem;cursor:pointer;color:#666;min-width:60px;white-space:nowrap;transition:all .2s}
+.tab-btn.active{color:#667eea;border-bottom:3px solid #667eea;font-weight:700}
+.search-bar{padding:10px 12px;background:#fff;border-bottom:1px solid #eee}
+.search-bar input{width:100%;padding:8px 12px;border:1.5px solid #ddd;border-radius:20px;font-size:.9rem;outline:none}
+.search-bar input:focus{border-color:#667eea}
+.section{display:none;padding:10px}
+.section.active{display:block}
+.word-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.word-card{background:#fff;border-radius:10px;padding:12px 10px;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.08);transition:all .2s;text-align:center;border:2px solid transparent}
+.word-card:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(102,126,234,.25)}
+.word-card.active{border-color:#667eea;background:#f0f3ff}
+.word-card .num{font-size:.65rem;color:#aaa;margin-bottom:2px}
+.word-card .ic{font-size:1.5rem;margin-bottom:4px}
+.word-card .en{font-size:.95rem;font-weight:700;color:#333;margin-bottom:2px}
+.word-card .cn{font-size:.75rem;color:#888;line-height:1.3}
+.detail-panel{position:sticky;bottom:0;z-index:100;background:#fff;border-top:2px solid #667eea;padding:14px 16px;box-shadow:0 -4px 20px rgba(0,0,0,.12)}
+.detail-panel.hidden{display:none}
+.dp-top{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.dp-num{font-size:.7rem;color:#aaa}
+.dp-en{font-size:1.5rem;font-weight:800;color:#333}
+.dp-ic{font-size:1.8rem}
+.dp-cn{font-size:.95rem;color:#555;margin-bottom:10px;line-height:1.5}
+.dp-btns{display:flex;gap:8px}
+.btn{flex:1;padding:9px 6px;border:none;border-radius:20px;font-size:.85rem;cursor:pointer;font-weight:600;transition:all .2s}
+.btn-normal{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff}
+.btn-slow{background:linear-gradient(135deg,#f093fb,#f5576c);color:#fff}
+.btn-close{background:#f0f0f0;color:#666;flex:0;padding:9px 16px}
+.btn:active{transform:scale(.95)}
+.count-badge{background:#667eea;color:#fff;border-radius:10px;padding:2px 8px;font-size:.75rem;margin-left:6px}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+.word-card.active .ic{animation:bounce .5s}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>张艺橗 🎓 中考英语词汇</h1>
+  <p>中考英语词汇速记手册 · A-B 共 <span id="totalCount"></span> 个单词</p>
+</div>
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="switchTab('A')">🅰️ A字母<span class="count-badge" id="countA"></span></button>
+  <button class="tab-btn" onclick="switchTab('B')">🅱️ B字母<span class="count-badge" id="countB"></span></button>
+  <button class="tab-btn" onclick="switchTab('all')">📖 全部</button>
+</div>
+<div class="search-bar">
+  <input type="text" id="searchInput" placeholder="🔍 搜索单词或中文含义..." oninput="doSearch()">
+</div>
+<div id="secA" class="section active"></div>
+<div id="secB" class="section"></div>
+<div id="secAll" class="section"></div>
+<div class="detail-panel hidden" id="detailPanel">
+  <div class="dp-top">
+    <span class="dp-ic" id="dpIc"></span>
+    <span class="dp-num" id="dpNum"></span>
+    <span class="dp-en" id="dpEn"></span>
+  </div>
+  <div class="dp-cn" id="dpCn"></div>
+  <div class="dp-btns">
+    <button class="btn btn-normal" onclick="playWord(1)">▶ 朗读</button>
+    <button class="btn btn-slow" onclick="playWord(0.6)">🐢 慢读</button>
+    <button class="btn btn-close" onclick="closeDetail()">✕</button>
+  </div>
+</div>
+<script>
+const words = [
+  {n:20,w:'actor',m:'(男)演员',i:'🎭'},
+  {n:21,w:'actually',m:'的确；事实上；实际上',i:'💡'},
+  {n:22,w:'ad',m:'启事；广告',i:'📢'},
+  {n:23,w:'add',m:'增加；添加；加',i:'➕'},
+  {n:24,w:'address',m:'地址；住址；通信处',i:'📍'},
+  {n:25,w:'admire',m:'钦佩；赞赏；欣赏',i:'👏'},
+  {n:26,w:'admit',m:'承认；准许进入',i:'🤝'},
+  {n:27,w:'adult',m:'成年人；成年动物；成年的',i:'🧑'},
+  {n:28,w:'advantage',m:'优点；有利条件；优势',i:'⭐'},
+  {n:29,w:'adventure',m:'冒险；冒险活动',i:'🗺️'},
+  {n:30,w:'advice',m:'建议；忠告；劝告',i:'💬'},
+  {n:31,w:'advise',m:'劝告；忠告；建议',i:'🗣️'},
+  {n:32,w:'afford',m:'买得起；（有时间）能做',i:'💰'},
+  {n:33,w:'affect',m:'对……产生影响；侵袭；假装',i:'🔄'},
+  {n:34,w:'afraid',m:'害怕的；担心的',i:'😨'},
+  {n:35,w:'after',m:'在……之后；在……后面',i:'⏰'},
+  {n:36,w:'afternoon',m:'下午',i:'🌅'},
+  {n:37,w:'again',m:'再说；再一次；又一次',i:'🔁'},
+  {n:38,w:'against',m:'反对；违反；对……不利；碰',i:'🚫'},
+  {n:39,w:'age',m:'年龄；时代；时期',i:'📅'},
+  {n:40,w:'agent',m:'代理人',i:'🤵'},
+  {n:41,w:'ago',m:'以前',i:'⏮️'},
+  {n:42,w:'agree',m:'同意；应允',i:'✅'},
+  {n:43,w:'ahead',m:'在前面',i:'➡️'},
+  {n:44,w:'AI',m:'人工智能',i:'🤖'},
+  {n:45,w:'aid',m:'帮助；援助',i:'🆘'},
+  {n:46,w:'aim',m:'目的；瞄准',i:'🎯'},
+  {n:47,w:'air',m:'空气；天空',i:'💨'},
+  {n:48,w:'air conditioner',m:'空调',i:'❄️'},
+  {n:49,w:'airline',m:'航空公司',i:'✈️'},
+  {n:50,w:'airplane',m:'飞机',i:'✈️'},
+  {n:51,w:'airport',m:'机场',i:'🛫'},
+  {n:52,w:'alarm',m:'发出警报；警报器',i:'🔔'},
+  {n:53,w:'album',m:'音乐专辑；相册；集邮册',i:'💿'},
+  {n:54,w:'alien',m:'外国人；外星人；陌生的',i:'👽'},
+  {n:55,w:'alive',m:'活着',i:'💚'},
+  {n:56,w:'all',m:'全部；所有；完全',i:'🌟'},
+  {n:57,w:'allow',m:'允许，准许',i:'✅'},
+  {n:58,w:'almost',m:'几乎，差不多',i:'〜'},
+  {n:59,w:'alone',m:'单独地',i:'🧍'},
+  {n:60,w:'along',m:'沿着；向前；和……一起',i:'🚶'},
+  {n:61,w:'aloud',m:'出声地',i:'📢'},
+  {n:62,w:'already',m:'都，已经',i:'⏩'},
+  {n:63,w:'also',m:'也',i:'➕'},
+  {n:64,w:'although',m:'虽然；尽管',i:'🤔'},
+  {n:65,w:'always',m:'总是；（将）永远',i:'♾️'},
+  {n:66,w:'AM',m:'上午（a.m.）',i:'🌄'},
+  {n:67,w:'amazing',m:'令人惊讶的；令人惊叹的',i:'😲'},
+  {n:68,w:'ambition',m:'雄心，野心；夙愿',i:'🔥'},
+  {n:69,w:'among',m:'在（三者或以上）中；系……中之一',i:'🔵'},
+  {n:70,w:'amount',m:'数量；金额',i:'📊'},
+  {n:71,w:'amusement',m:'乐趣；娱乐；消遣活动',i:'🎡'},
+  {n:72,w:'amusing',m:'有乐趣的；逗人笑的',i:'😄'},
+  {n:73,w:'ancestor',m:'祖先；祖宗；原始种型',i:'👴'},
+  {n:74,w:'ancient',m:'古代的',i:'🏛️'},
+  {n:75,w:'and',m:'和',i:'🔗'},
+  {n:76,w:'angry',m:'生气的；愤怒的',i:'😡'},
+  {n:77,w:'animal',m:'动物',i:'🐾'},
+  {n:78,w:'announce',m:'宣布；公布；播音',i:'📣'},
+  {n:79,w:'announcement',m:'宣布；宣告；公告',i:'📋'},
+  {n:80,w:'annoying',m:'使恼怒的；使生气的',i:'😤'},
+  {n:81,w:'another',m:'再一；别的；另一个',i:'2️⃣'},
+  {n:82,w:'answer',m:'回答；答复；答案',i:'💬'},
+  {n:83,w:'ant',m:'蚂蚁',i:'🐜'},
+  {n:84,w:'any',m:'任何的；任一的；任何一些',i:'❓'},
+  {n:85,w:'anybody',m:'任何人',i:'👤'},
+  {n:86,w:'anymore',m:'再也（不）',i:'🚫'},
+  {n:87,w:'anything',m:'任何事物',i:'🎁'},
+  {n:88,w:'anytime',m:'任何时候',i:'⏰'},
+  {n:89,w:'anyway',m:'不管怎么说；无论如何',i:'🤷'},
+  {n:90,w:'anywhere',m:'任何地方',i:'📍'},
+  {n:91,w:'apartment',m:'公寓套房',i:'🏠'},
+  {n:92,w:'apologize',m:'道歉',i:'🙏'},
+  {n:93,w:'app',m:'应用程序',i:'📱'},
+  {n:94,w:'appear',m:'出现；呈现；看来，似乎',i:'👀'},
+  {n:95,w:'applause',m:'喝彩；叫好；鼓掌',i:'👏'},
+  {n:96,w:'apple',m:'苹果',i:'🍎'},
+  {n:97,w:'apply',m:'应用；运用；申请；请求',i:'📝'},
+  {n:98,w:'area',m:'面积；区域；领域；方面',i:'📐'},
+  {n:99,w:'argue',m:'争论；争吵',i:'💬'},
+  {n:100,w:'arm',m:'手臂；上肢',i:'💪'},
+  {n:101,w:'army',m:'陆上作战军队；陆军部队',i:'🎖️'},
+  {n:102,w:'around',m:'围绕；环绕；大约；到处',i:'🔄'},
+  {n:103,w:'arrange',m:'安排；布置',i:'📋'},
+  {n:104,w:'arrival',m:'到达，抵达；到达者',i:'🛬'},
+  {n:105,w:'arrive',m:'到达；到来',i:'🏁'},
+  {n:106,w:'art',m:'艺术；美术',i:'🎨'},
+  {n:107,w:'article',m:'（报刊上的）文章；冠词',i:'📰'},
+  {n:108,w:'artist',m:'艺术家；（尤指）画家',i:'🎨'},
+  {n:109,w:'artistic',m:'艺术的；有艺术天赋的',i:'🖌️'},
+  {n:110,w:'artwork',m:'插图；艺术作品',i:'🖼️'},
+  {n:111,w:'as',m:'当……时；像……一样；因为',i:'🔗'},
+  {n:112,w:'ashamed',m:'惭愧的，羞愧的；尴尬的',i:'😳'},
+  {n:113,w:'ask',m:'问；请求；要求',i:'❓'},
+  {n:114,w:'asleep',m:'睡着的；麻木的；长眠',i:'😴'},
+  {n:115,w:'asteroid',m:'小行星',i:'🌠'},
+  {n:116,w:'astronaut',m:'宇航员',i:'👨‍🚀'},
+  {n:117,w:'astronomer',m:'天文学家',i:'🔭'},
+  {n:118,w:'assistant',m:'助手，助理',i:'👥'},
+  {n:119,w:'at',m:'在（某地点、某时间等）',i:'📍'},
+  {n:120,w:'athlete',m:'运动员',i:'🏃'},
+  {n:121,w:'athletics',m:'体育运动；田径运动',i:'🏅'},
+  {n:122,w:'atmosphere',m:'大气层；氛围；气氛',i:'🌍'},
+  {n:123,w:'attack',m:'进攻；攻击；（疾病的）发作',i:'⚔️'},
+  {n:124,w:'attend',m:'出席，参加；注意；定期去',i:'👥'},
+  {n:125,w:'attention',m:'注意；留心；专注；注意力',i:'👁️'},
+  {n:126,w:'attract',m:'吸引',i:'🧲'},
+  {n:127,w:'audience',m:'观众；听众',i:'👥'},
+  {n:128,w:'aunt',m:'姑母；姨母；伯（姑）母',i:'👩'},
+  {n:129,w:'author',m:'著者；作家',i:'✍️'},
+  {n:130,w:'automatic',m:'自动的',i:'🤖'},
+  {n:131,w:'autumn',m:'秋天；秋季',i:'🍂'},
+  {n:132,w:'available',m:'可利用的；可获得的',i:'✅'},
+  {n:133,w:'average',m:'平均数；平均的',i:'📊'},
+  {n:134,w:'avoid',m:'避免；防止；躲避；回避',i:'🚫'},
+  {n:135,w:'awake',m:'（使）醒来；醒着',i:'👁️'},
+  {n:136,w:'award',m:'授予；奖，奖品',i:'🏆'},
+  {n:137,w:'aware',m:'知道；意识到；明白',i:'💡'},
+  {n:138,w:'away',m:'离开；不在',i:'➡️'},
+  {n:139,w:'awful',m:'可怕的；糟糕的',i:'😱'},
+  {n:140,w:'baby',m:'婴儿',i:'👶'},
+  {n:141,w:'back',m:'支持；（使）后退；后面的；背',i:'🔙'},
+  {n:142,w:'background',m:'背景；出身背景',i:'🖼️'},
+  {n:143,w:'backpack',m:'背包，旅行包',i:'🎒'},
+  {n:144,w:'bad',m:'坏的；严重的；有害的',i:'❌'},
+  {n:145,w:'badminton',m:'羽毛球运动',i:'🏸'},
+  {n:146,w:'bag',m:'纸袋；手提包，旅行袋',i:'👜'},
+  {n:147,w:'balance',m:'平衡，均衡；余额',i:'⚖️'},
+  {n:148,w:'ball',m:'球；舞会',i:'⚽'},
+  {n:149,w:'ballet',m:'芭蕾舞；芭蕾舞团',i:'🩰'},
+  {n:150,w:'balloon',m:'气球；（突然）膨胀',i:'🎈'},
+  {n:151,w:'bamboo',m:'竹子',i:'🎋'},
+  {n:152,w:'banana',m:'香蕉',i:'🍌'},
+  {n:153,w:'band',m:'乐队',i:'🎵'},
+  {n:154,w:'bandage',m:'绷带',i:'🩹'},
+  {n:155,w:'bank',m:'银行；河岸；水道',i:'🏦'},
+  {n:156,w:'barber',m:'理发师',i:'💈'},
+  {n:157,w:'bark',m:'树皮，吠声；叫；厉声质问',i:'🐕'},
+  {n:158,w:'base',m:'基础；根据；基底',i:'🏗️'},
+  {n:159,w:'baseball',m:'棒球运动',i:'⚾'},
+  {n:160,w:'basic',m:'基本的；初级的',i:'📚'},
+  {n:161,w:'basket',m:'篮子；一篮',i:'🧺'},
+  {n:162,w:'basketball',m:'篮球',i:'🏀'},
+  {n:163,w:'bat',m:'蝙蝠；球棒，球拍',i:'🦇'},
+  {n:164,w:'bath',m:'洗澡；浴缸；给……洗澡',i:'🛁'},
+  {n:165,w:'bathroom',m:'浴室；洗手间；卫生间',i:'🚿'},
+  {n:166,w:'battery',m:'电池；一批，一群',i:'🔋'},
+  {n:167,w:'be',m:'有；在（某处）',i:'🔵'},
+  {n:168,w:'beach',m:'沙滩；海滩',i:'🏖️'},
+  {n:169,w:'bean',m:'豆；豆科植物',i:'🌱'},
+  {n:170,w:'bear',m:'熊；忍受；承受',i:'🐻'},
+  {n:171,w:'beat',m:'敲打；打败；（心）跳动；节拍',i:'🥁'},
+  {n:172,w:'beautiful',m:'美丽的；美妙的',i:'🌸'},
+  {n:173,w:'because',m:'因为',i:'💡'},
+  {n:174,w:'become',m:'成为；变成',i:'🔄'},
+  {n:175,w:'bed',m:'床；（河）床',i:'🛏️'},
+  {n:176,w:'bedroom',m:'卧室',i:'🏠'},
+  {n:177,w:'bee',m:'蜜蜂',i:'🐝'},
+  {n:178,w:'beef',m:'牛肉',i:'🥩'},
+  {n:179,w:'before',m:'在……以前；以前；过去',i:'⏮️'},
+  {n:180,w:'begin',m:'开始',i:'🚀'},
+  {n:181,w:'behave',m:'表现；表现得体',i:'😊'},
+  {n:182,w:'behavior',m:'行为；活动方式',i:'🔄'},
+  {n:183,w:'behind',m:'在……的后面；落后；留在原处',i:'↩️'},
+  {n:184,w:'being',m:'存在；生物；be的现在分词',i:'🌱'},
+  {n:185,w:'believe',m:'相信；认为有可能',i:'💭'},
+  {n:186,w:'bell',m:'铃（声）',i:'🔔'},
+  {n:187,w:'belong',m:'应在（某处）；属于；适应',i:'🏠'},
+  {n:188,w:'below',m:'在（到）……下面；低于',i:'⬇️'},
+  {n:189,w:'belt',m:'腰带，皮带；地带，地区',i:'👔'},
+  {n:190,w:'benefit',m:'利益；好处；使受益',i:'✨'},
+  {n:191,w:'beside',m:'在旁边',i:'📍'},
+  {n:192,w:'best',m:'最好的；最出色的；最好地',i:'🥇'},
+  {n:193,w:'bet',m:'打赌；用……打赌；预计',i:'🎰'},
+  {n:194,w:'better',m:'较好的；更好的（good比较级）',i:'⬆️'},
+  {n:195,w:'between',m:'介于……之间',i:'🔗'},
+  {n:196,w:'beyond',m:'超出；在更远处',i:'🌌'},
+  {n:197,w:'big',m:'大的，巨大的；严重的',i:'🔵'},
+  {n:198,w:'bike',m:'自行车；脚踏车',i:'🚲'},
+  {n:199,w:'bill',m:'账单；（餐馆的）账单；钞币',i:'💵'},
+  {n:200,w:'billion',m:'十亿，大量',i:'💰'},
+  {n:201,w:'bin',m:'箱；垃圾箱',i:'🗑️'},
+  {n:202,w:'biology',m:'生物学',i:'🔬'},
+  {n:203,w:'bird',m:'鸟；禽',i:'🐦'},
+  {n:204,w:'birth',m:'出生；诞生',i:'👶'},
+  {n:205,w:'birthday',m:'生日',i:'🎂'},
+  {n:206,w:'biscuit',m:'饼干',i:'🍪'},
+  {n:207,w:'bit',m:'有点儿，稍微；一部分',i:'🔹'},
+  {n:208,w:'bite',m:'咬，叮；咬；（咬下的）一口',i:'🦷'},
+  {n:209,w:'black',m:'黑色；黑色的；黑暗的',i:'⬛'},
+  {n:210,w:'blackboard',m:'黑板',i:'📋'},
+  {n:211,w:'blank',m:'空白的，空的；空格，空白处',i:'⬜'},
+  {n:212,w:'blanket',m:'毯子；毛毯',i:'🛏️'},
+  {n:213,w:'bleed',m:'流血；失血',i:'🩸'},
+  {n:214,w:'blender',m:'（电动）食物搅拌器',i:'🍹'},
+  {n:215,w:'blind',m:'使失明；失明的；瞎的',i:'👁️'},
+  {n:216,w:'block',m:'大块；街区；阻塞；阻住',i:'🧱'},
+  {n:217,w:'blog',m:'博客；网志；写博客',i:'💻'},
+  {n:218,w:'blonde',m:'金发女郎；头发金黄的',i:'👱'},
+  {n:219,w:'blood',m:'血；血统',i:'🩸'},
+  {n:220,w:'blouse',m:'（女式）短上衣',i:'👚'},
+  {n:221,w:'blow',m:'吹，吹奏；吹动，泄露；打击',i:'💨'},
+  {n:222,w:'blue',m:'蓝色；蓝色的；忧郁的',i:'💙'},
+  {n:223,w:'board',m:'板，木板；董事会；上船；住宿',i:'📋'},
+  {n:224,w:'boat',m:'船；舟',i:'⛵'},
+  {n:225,w:'body',m:'身体，躯体；尸体',i:'💪'},
+  {n:226,w:'boil',m:'煮沸，烧开，（使）沸腾',i:'🔥'},
+  {n:227,w:'book',m:'书籍；本子；预约，预订',i:'📚'},
+  {n:228,w:'bookcase',m:'书架；书柜',i:'📚'},
+  {n:229,w:'bookshop',m:'书店',i:'🏪'},
+  {n:230,w:'bookstore',m:'书店',i:'🏪'},
+  {n:231,w:'bone',m:'骨头；骨质',i:'🦴'},
+  {n:232,w:'border',m:'边界；边境；国界；边疆',i:'🗺️'},
+  {n:233,w:'bored',m:'无聊的，无趣的；厌倦的',i:'😑'},
+  {n:234,w:'boring',m:'没趣的；令人厌烦的',i:'😴'},
+  {n:235,w:'born',m:'出生；形成；天生的',i:'🌟'},
+  {n:236,w:'borrow',m:'借用；借',i:'📖'},
+  {n:237,w:'boss',m:'领导；老板',i:'👔'},
+  {n:238,w:'both',m:'两个；两个都',i:'👫'},
+  {n:239,w:'bottle',m:'瓶子；一瓶（的量）',i:'🍾'},
+  {n:240,w:'bottom',m:'底部，最下部；底部的',i:'⬇️'},
+  {n:241,w:'bow',m:'鞠躬，点头；使弯曲',i:'🙇'},
+  {n:242,w:'bowl',m:'盆；碗',i:'🥣'},
+  {n:243,w:'box',m:'盒子，箱子',i:'📦'},
+  {n:244,w:'boy',m:'男孩',i:'👦'},
+  {n:245,w:'brace',m:'支架；背带；牙箍',i:'🦷'},
+  {n:246,w:'brain',m:'脑，大脑；智力',i:'🧠'},
+  {n:247,w:'branch',m:'枝；树枝；分支，分行，分部',i:'🌿'},
+  {n:248,w:'brand',m:'品牌；类型；败坏名声',i:'🏷️'},
+  {n:249,w:'brave',m:'勇敢的；无惧的',i:'🦁'},
+  {n:250,w:'bread',m:'面包',i:'🍞'},
+  {n:251,w:'break',m:'（使）破，损坏；打破；休息',i:'⏸️'},
+  {n:252,w:'breakfast',m:'早餐',i:'🍳'},
+  {n:253,w:'breath',m:'呼吸的空气',i:'💨'},
+  {n:254,w:'bridge',m:'桥梁，桥',i:'🌉'},
+  {n:255,w:'brief',m:'简明的，简单的；指示',i:'📝'},
+  {n:256,w:'bright',m:'明亮的；聪明的；有希望的',i:'☀️'},
+  {n:257,w:'bring',m:'拿来，带来，取来；引起',i:'🎁'},
+  {n:258,w:'broadcast',m:'广播节目；电视节目；广播',i:'📺'},
+  {n:259,w:'broken',m:'破碎的，残缺的；被违背的',i:'💔'},
+  {n:260,w:'brother',m:'兄弟，伙伴',i:'👬'},
+  {n:261,w:'brown',m:'棕色的，褐色的；棕色',i:'🟤'},
+  {n:262,w:'brush',m:'刷子，画笔；（用刷子）刷净',i:'🖌️'},
+  {n:263,w:'bubble',m:'泡沫，泡泡，气泡；冒泡',i:'💭'},
+  {n:264,w:'budget',m:'预算',i:'💰'},
+  {n:265,w:'build',m:'建筑，建造；开发；身材',i:'🏗️'},
+  {n:266,w:'building',m:'建筑物，房子，楼房',i:'🏢'},
+  {n:267,w:'bulb',m:'电灯泡',i:'💡'},
+  {n:268,w:'bully',m:'恐吓，伤害；恃强欺弱者',i:'😤'},
+  {n:269,w:'bund',m:'堤岸',i:'🌊'},
+  {n:270,w:'burger',m:'汉堡；鱼松饼；果仁饼',i:'🍔'},
+  {n:271,w:'burial',m:'埋葬；葬礼',i:'⚰️'},
+  {n:272,w:'burn',m:'燃烧；烧伤；（使）烫伤',i:'🔥'},
+  {n:273,w:'bus',m:'公共汽车',i:'🚌'},
+  {n:274,w:'bush',m:'灌木',i:'🌿'},
+  {n:275,w:'business',m:'商业；商务；企业；工作',i:'💼'},
+  {n:276,w:'busy',m:'忙的，繁忙的，热闹的',i:'⏰'},
+  {n:277,w:'but',m:'但是；可是；除……以外',i:'🔄'},
+  {n:278,w:'butter',m:'黄油',i:'🧈'},
+  {n:279,w:'butterfly',m:'蝴蝶',i:'🦋'},
+  {n:280,w:'button',m:'按钮',i:'🔘'},
+  {n:281,w:'buy',m:'买，购买',i:'🛒'},
+  {n:282,w:'by',m:'用（手段、方式）；凭借；被；在……旁边',i:'🔑'},
+  {n:283,w:'bye',m:'再见，再会',i:'👋'}
+];
+
+const wordsA = words.filter(w => w.n <= 139);
+const wordsB = words.filter(w => w.n >= 140);
+
+document.getElementById('countA').textContent = wordsA.length;
+document.getElementById('countB').textContent = wordsB.length;
+document.getElementById('totalCount').textContent = words.length;
+
+let currentWord = null;
+let currentTab = 'A';
+
+function makeCard(w) {
+  return `<div class="word-card" id="card-${w.n}" onclick="selectWord(${w.n})">
+    <div class="num">#${w.n}</div>
+    <div class="ic">${w.i}</div>
+    <div class="en">${w.w}</div>
+    <div class="cn">${w.m}</div>
+  </div>`;
+}
+
+document.getElementById('secA').innerHTML = `<div class="word-grid">${wordsA.map(makeCard).join('')}</div>`;
+document.getElementById('secB').innerHTML = `<div class="word-grid">${wordsB.map(makeCard).join('')}</div>`;
+document.getElementById('secAll').innerHTML = `<div class="word-grid">${words.map(makeCard).join('')}</div>`;
+
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab-btn').forEach((b,i) => {
+    b.classList.toggle('active', (tab==='A'&&i===0)||(tab==='B'&&i===1)||(tab==='all'&&i===2));
+  });
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  if(tab==='A') document.getElementById('secA').classList.add('active');
+  else if(tab==='B') document.getElementById('secB').classList.add('active');
+  else document.getElementById('secAll').classList.add('active');
+  document.getElementById('searchInput').value = '';
+}
+
+function selectWord(n) {
+  const w = words.find(x => x.n === n);
+  if(!w) return;
+  document.querySelectorAll('.word-card').forEach(c => c.classList.remove('active'));
+  document.querySelectorAll(`#card-${n}`).forEach(c => c.classList.add('active'));
+  currentWord = w;
+  document.getElementById('dpNum').textContent = '#' + w.n;
+  document.getElementById('dpEn').textContent = w.w;
+  document.getElementById('dpIc').textContent = w.i;
+  document.getElementById('dpCn').textContent = w.m;
+  document.getElementById('detailPanel').classList.remove('hidden');
+  playWord(1);
+}
+
+function closeDetail() {
+  document.getElementById('detailPanel').classList.add('hidden');
+  document.querySelectorAll('.word-card').forEach(c => c.classList.remove('active'));
+  currentWord = null;
+}
+
+function playWord(rate) {
+  if(!currentWord) return;
+  const wordToPlay = currentWord.w === 'AM' ? 'AM' : currentWord.w;
+  const au = new Audio('https://dict.youdao.com/dictvoice?audio=' + encodeURIComponent(wordToPlay) + '&type=1');
+  au.playbackRate = rate;
+  au.play().catch(() => {
+    if('speechSynthesis' in window) {
+      const u = new SpeechSynthesisUtterance(wordToPlay);
+      u.lang = 'en-US'; u.rate = rate; speechSynthesis.speak(u);
+    }
+  });
+}
+
+function doSearch() {
+  const q = document.getElementById('searchInput').value.trim().toLowerCase();
+  if(!q) {
+    document.querySelectorAll('.word-card').forEach(c => c.style.display = '');
+    return;
+  }
+  switchTab('all');
+  setTimeout(() => {
+    document.querySelectorAll('#secAll .word-card').forEach(c => {
+      const en = c.querySelector('.en').textContent.toLowerCase();
+      const cn = c.querySelector('.cn').textContent.toLowerCase();
+      c.style.display = (en.includes(q) || cn.includes(q)) ? '' : 'none';
+    });
+  }, 50);
+}
+</script>
+</body>
+</html>
